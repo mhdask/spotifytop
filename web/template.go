@@ -1,6 +1,7 @@
 package web
 
 import (
+	"embed"
 	"net/http"
 	"text/template"
 
@@ -8,9 +9,11 @@ import (
 )
 
 const (
-	templatesBasePath = "web/templates/"
-	templatesExt      = ".tmpl"
+	templatesExt = ".tmpl"
 )
+
+//go:embed templates/*
+var templateFS embed.FS
 
 func (w *Web) parseTemplate(name, path string) {
 	if path == "" {
@@ -22,7 +25,7 @@ func (w *Web) parseTemplate(name, path string) {
 		return
 	}
 
-	w.Templates[name] = template.Must(template.ParseFiles(templatesBasePath+name+templatesExt, templatesBasePath+"base"+templatesExt))
+	w.Templates[name] = template.Must(template.ParseFS(templateFS, "templates/"+name+templatesExt, "templates/base"+templatesExt))
 }
 
 func (w *Web) templateGet(name string) *template.Template {
