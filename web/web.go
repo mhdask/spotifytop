@@ -35,7 +35,7 @@ type Web struct {
 	Cookies   *sessions.CookieStore
 
 	ServerHostName string
-	ServerPort     string
+	ServerPort     int
 
 	Templates map[string]*template.Template
 
@@ -69,8 +69,8 @@ func (w *Web) New() {
 		log.Info().Msg("empty hostname, defaulting to localhost")
 	}
 
-	if w.ServerPort == "" {
-		w.ServerPort = "8080"
+	if w.ServerPort == 0 {
+		w.ServerPort = 8080
 		log.Info().Msg("empty serverport, defaulting to 8080")
 	}
 
@@ -127,8 +127,8 @@ func (w *Web) Routes(r *mux.Router) {
 }
 
 func (w *Web) Run() {
-	log.Info().Msgf("Starting server on port %s:%s", w.ServerHostName, w.ServerPort)
-	if err := http.ListenAndServe(fmt.Sprintf("%s:%s", w.ServerHostName, w.ServerPort), w.Router); err != nil {
+	log.Info().Msgf("Starting server on port %s:%d", w.ServerHostName, w.ServerPort)
+	if err := http.ListenAndServe(fmt.Sprintf("%s:%d", w.ServerHostName, w.ServerPort), w.Router); err != nil {
 		log.Fatal().Err(err).Msg("failed to start webserver")
 	}
 }

@@ -3,10 +3,9 @@ package config
 import (
 	"fmt"
 	"os"
-	"strings"
+	"strconv"
 
 	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
 )
 
 const (
@@ -15,69 +14,71 @@ const (
 
 type ServerConfig struct {
 	// ServerHost specifies the host the server listens on
-	ServerHost string `mapstructure:"server_host"`
+	ServerHost string
 	// ServerPort specifies the port the server listens on
-	ServerPort string `mapstructure:"server_port"`
+	ServerPort int
 	// CookieKey specifies the key used for encoding the cookies
-	Cookiekey string `mapstructure:"cookie_key"`
+	CookieKey string
 
 	// SpotifyState specifies the string spotify uses to generate unique URLs
-	SpotifyState string `mapstructure:"spotify_state"`
+	SpotifyState string
 	// SpotifyRedirectURI specifies the URI that will be redirected
 	// to from spotify upon succesful login
 	// This needs to include protocol and port, e.g:
 	// http://localhost:8080
-	SpotifyRedirectURI string `mapstructure:"spotify_redirect_uri"`
+	SpotifyRedirectURI string
 	// SpotifyClientKey is the client key specified on the spotify
 	// developer portal
-	SpotifyClientKey string `mapstructure:"spotify_client_key"`
+	SpotifyClientKey string
 	// SpotifySecretKey is the client key specified on the spotify
 	// developer portal
-	SpotifySecretKey string `mapstructure:"spotify_secret_key"`
-}
-
-// Generates the path string
-func userConfigDir() string {
-	dir, err := os.UserConfigDir()
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed to get user config dir")
-	}
-
-	return fmt.Sprintf("%s/%s", dir, strings.ToLower(SoftwareName))
+	SpotifySecretKey string
 }
 
 func GetServerConfig() (ServerConfig, error) {
-	vip := viper.New()
-	log.Info().Str("config_path", userConfigDir()).Msg("setting config path")
-
-	// setup viper
-	vip.SetConfigName("config")
-	vip.SetConfigType("yaml")
-	vip.AddConfigPath(userConfigDir())
-	vip.SetEnvPrefix(strings.ToUpper(SoftwareName))
-	vip.AutomaticEnv()
-	setClientDefaults(vip)
-
-	// read configuration file
-	// if the file exists and malformatted, panic.
-	// it it does not exists, just continue
-	if err := vip.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return ServerConfig{}, err
-		}
+	cfg := ServerConfig{
+		ServerHost:         getEnv("SPOTIFYTOP_SERVER_HOST", "0.0.0.0"),
+		ServerPort:         getEnvInt("SPOTIFYTOP_SERVER_PORT", 8080),
+		CookieKey:          getEnv("SPOTIFYTOP_COOKIE_KEY", "cookie"),
+		SpotifyState:       getEnv("SPOTIFYTOP_SPOTIFY_STATE", "state"),
+		SpotifyRedirectURI: os.Getenv("SPOTIFYTOP_SPOTIFY_REDIRECT_URI"),
+		SpotifyClientKey:   os.Getenv("SPOTIFYTOP_SPOTIFY_CLIENT_KEY"),
+		SpotifySecretKey:   os.Getenv("SPOTIFYTOP_SPOTIFY_SECRET_KEY"),
 	}
 
-	// unrmarshal configuration into struct
-	var conf ServerConfig
-	if err := vip.Unmarshal(&conf); err != nil {
-		return ServerConfig{}, err
+	if cfg.SpotifyClientKey == "" || cfg.SpotifySecretKey == "" || cfg.SpotifyRedirectURI == "" {
+		return cfg, fmt.Errorf("required spotify configuration missing")
 	}
 
-	return conf, nil
+	log.Info().
+		Str("host", cfg.ServerHost).
+		Int("port", cfg.ServerPort).
+		Msg("Loaded spotifytop config from environment")
+
+	return cfg, nil
 }
 
-func setClientDefaults(vip *viper.Viper) {
-	// set default values
-	vip.SetDefault("spotify_state", "secret")
-	vip.SetDefault("cookie_key", "secret")
+func getEnv(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
+}
+
+func getEnvInt(key string, def int) int {
+	if v := os.Getenv(key); v != "" {
+		i, err := strconv.Atoi(v)
+		if err != nil {
+			log.Error().
+				Str("key", key).
+				Str("value", v).
+				Err(err).
+				Msg("invalid integer environment variable, using default")
+			return def
+		}
+
+		return i
+	}
+
+	return def
 }

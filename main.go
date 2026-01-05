@@ -16,8 +16,8 @@ func main() {
 	server := web.Web{
 		ServerPort:   cfg.ServerPort,
 		State:        cfg.SpotifyState,
-		RedirectHost: "http://localhost:8888",
-		CookieKey:    []byte(cfg.Cookiekey),
+		RedirectHost: cfg.SpotifyRedirectURI,
+		CookieKey:    []byte(cfg.CookieKey),
 		Clientkey:    cfg.SpotifyClientKey,
 		Secretkey:    cfg.SpotifySecretKey,
 	}
