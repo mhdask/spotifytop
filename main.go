@@ -14,12 +14,13 @@ func main() {
 	}
 
 	server := web.Web{
-		ServerPort:   cfg.ServerPort,
-		State:        cfg.SpotifyState,
-		RedirectHost: cfg.SpotifyRedirectURI,
-		CookieKey:    []byte(cfg.CookieKey),
-		Clientkey:    cfg.SpotifyClientKey,
-		Secretkey:    cfg.SpotifySecretKey,
+		ServerHostName: cfg.ServerHost,
+		ServerPort:     cfg.ServerPort,
+		State:          cfg.SpotifyState,
+		RedirectHost:   cfg.SpotifyRedirectURI,
+		CookieKey:      []byte(cfg.CookieKey),
+		Clientkey:      cfg.SpotifyClientKey,
+		Secretkey:      cfg.SpotifySecretKey,
 	}
 
 	server.New()
