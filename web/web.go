@@ -5,7 +5,6 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io/fs"
-	"mime"
 	"net/http"
 	"os"
 	"strconv"
@@ -31,8 +30,6 @@ func init() {
 	// Need to register FlashMessage struct to
 	// later be encoded/decoded by session.AddFlash()
 	gob.Register(flashMessage{})
-
-	mime.AddExtensionType(".css", "text/css")
 }
 
 type Web struct {
@@ -124,7 +121,7 @@ func (w *Web) Routes(r *mux.Router) {
 		log.Fatal().Err(err).Msg("failed to create static sub filesystem")
 	}
 
-	r.PathPrefix("/css/").Handler(http.StripPrefix("/css/", http.FileServer(http.FS(staticSub))))
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.FS(staticSub))))
 
 	r.HandleFunc("/", w.handleFrontPage).Methods("GET")
 	// r.HandleFunc("/topartistsauth", w.handleAuthenticateArtists)
